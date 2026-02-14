@@ -1,0 +1,56 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{EE441D5F-DBC4-463B-ADD6-21C65EBFFDED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WikiMigrator.Domain", "src\WikiMigrator.Domain\WikiMigrator.Domain.csproj", "{4B915A0D-311D-4156-A782-AD600828850A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WikiMigrator.Application", "src\WikiMigrator.Application\WikiMigrator.Application.csproj", "{C8324FF6-53D0-436C-B9D0-815634E7B7BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WikiMigrator.Infrastructure", "src\WikiMigrator.Infrastructure\WikiMigrator.Infrastructure.csproj", "{699E1662-4017-4CEA-990D-043DCD9D44F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WikiMigrator", "WikiMigrator\WikiMigrator.csproj", "{A5F515F8-C36E-4C02-9CE2-5295A082DA8B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{361F183C-4B7C-40F8-9204-8460B6734E65}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WikiMigrator.Tests", "tests\WikiMigrator.Tests\WikiMigrator.Tests.csproj", "{80D49762-5DF8-4425-B34B-2DA29154E917}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4B915A0D-311D-4156-A782-AD600828850A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B915A0D-311D-4156-A782-AD600828850A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B915A0D-311D-4156-A782-AD600828850A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B915A0D-311D-4156-A782-AD600828850A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8324FF6-53D0-436C-B9D0-815634E7B7BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8324FF6-53D0-436C-B9D0-815634E7B7BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8324FF6-53D0-436C-B9D0-815634E7B7BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8324FF6-53D0-436C-B9D0-815634E7B7BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{699E1662-4017-4CEA-990D-043DCD9D44F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{699E1662-4017-4CEA-990D-043DCD9D44F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{699E1662-4017-4CEA-990D-043DCD9D44F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{699E1662-4017-4CEA-990D-043DCD9D44F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5F515F8-C36E-4C02-9CE2-5295A082DA8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5F515F8-C36E-4C02-9CE2-5295A082DA8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5F515F8-C36E-4C02-9CE2-5295A082DA8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5F515F8-C36E-4C02-9CE2-5295A082DA8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80D49762-5DF8-4425-B34B-2DA29154E917}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80D49762-5DF8-4425-B34B-2DA29154E917}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80D49762-5DF8-4425-B34B-2DA29154E917}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80D49762-5DF8-4425-B34B-2DA29154E917}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4B915A0D-311D-4156-A782-AD600828850A} = {EE441D5F-DBC4-463B-ADD6-21C65EBFFDED}
+		{C8324FF6-53D0-436C-B9D0-815634E7B7BA} = {EE441D5F-DBC4-463B-ADD6-21C65EBFFDED}
+		{699E1662-4017-4CEA-990D-043DCD9D44F4} = {EE441D5F-DBC4-463B-ADD6-21C65EBFFDED}
+		{80D49762-5DF8-4425-B34B-2DA29154E917} = {361F183C-4B7C-40F8-9204-8460B6734E65}
+	EndGlobalSection
+EndGlobal

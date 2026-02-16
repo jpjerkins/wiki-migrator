@@ -169,4 +169,53 @@ public class MigrationJobTests
                 Directory.Delete(outputFolder, true);
         }
     }
+
+    // Filter out system tiddlers (titles starting with "$")
+    [Fact]
+    public async Task ExecuteAsync_FiltersOutSystemTiddlers()
+    {
+        // Arrange
+        var tempFolder = Path.Combine(Path.GetTempPath(), $"wiki_test_{Guid.NewGuid()}");
+        var inputFile = Path.Combine(tempFolder, "test.html");
+        var outputFolder = Path.Combine(Path.GetTempPath(), $"wiki_output_{Guid.NewGuid()}");
+        Directory.CreateDirectory(tempFolder);
+        
+        await File.WriteAllTextAsync(inputFile, "<html><body></body></html>");
+
+        // One normal tiddler, one system tiddler
+        var tiddlers = new List<WikiTiddler>
+        {
+            new WikiTiddler { Title = "Regular Note", Content = "content 1" },
+            new WikiTiddler { Title = "$:/plugins/tiddlywiki/markdown", Content = "system content" },
+            new WikiTiddler { Title = "$:/config/NewJournal/Text", Content = "more system" },
+            new WikiTiddler { Title = "Another Note", Content = "content 2" }
+        };
+
+        _mediatorMock.Setup(m => m.Send(It.IsAny<ParseFileCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(tiddlers);
+        
+        _mediatorMock.Setup(m => m.Send(It.IsAny<ConvertContentCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("converted content");
+
+        int writeCount = 0;
+        _mediatorMock.Setup(m => m.Send(It.IsAny<WriteFileCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<WriteFileCommand, CancellationToken>((_, _) => writeCount++)
+            .ReturnsAsync(true);
+
+        try
+        {
+            // Act
+            await _job.ExecuteAsync(inputFile, outputFolder);
+
+            // Assert - Only 2 non-system tiddlers should be written
+            Assert.Equal(2, writeCount);
+        }
+        finally
+        {
+            if (Directory.Exists(tempFolder))
+                Directory.Delete(tempFolder, true);
+            if (Directory.Exists(outputFolder))
+                Directory.Delete(outputFolder, true);
+        }
+    }
 }

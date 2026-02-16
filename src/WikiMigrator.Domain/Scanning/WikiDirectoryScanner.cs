@@ -101,7 +101,7 @@ public class WikiDirectoryScanner
     /// </summary>
     public IEnumerable<WikiFileInfo> GetProcessingOrder(ScanResult scanResult)
     {
-        return scanResult.Files.OrderBy(f => f.TiddlerModified ?? f.Modified);
+        return scanResult.Files.OrderBy(f => f.TiddlerCreated ?? f.TiddlerModified ?? f.Modified);
     }
 
     private WikiFileInfo? CreateWikiFileInfo(string filePath, string basePath)

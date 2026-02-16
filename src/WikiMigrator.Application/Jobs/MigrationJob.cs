@@ -22,9 +22,9 @@ public class MigrationJob
     /// <summary>
     /// Execute the migration job for a specific file
     /// </summary>
-    public async Task ExecuteAsync(string filePath, CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync(string filePath, string outputFolder, bool dryRun = false, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Starting migration job for file: {FilePath}", filePath);
+        _logger.LogInformation("Starting migration job for file: {FilePath}, DryRun: {DryRun}", filePath, dryRun);
 
         try
         {
@@ -38,10 +38,19 @@ public class MigrationJob
                     new ConvertContentCommand(tiddler), 
                     cancellationToken);
                 
-                // Write output
-                await _mediator.Send(
-                    new WriteFileCommand(tiddler.Title, convertedContent),
-                    cancellationToken);
+                // Write output only if not dry run
+                if (!dryRun)
+                {
+                    var sanitizedTitle = SanitizeFileName(tiddler.Title);
+                    var outputPath = Path.Combine(outputFolder, sanitizedTitle + ".md");
+                    await _mediator.Send(
+                        new WriteFileCommand(outputPath, convertedContent),
+                        cancellationToken);
+                }
+                else
+                {
+                    _logger.LogInformation("DRY RUN: Would write file for tiddler: {Title}", tiddler.Title);
+                }
             }
 
             _logger.LogInformation("Completed migration job for file: {FilePath}", filePath);
@@ -61,15 +70,30 @@ public class MigrationJob
         string outputFolder, 
         string filePattern = "*.md",
         bool recursive = true,
+        bool dryRun = false,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Starting batch migration job. Input: {Input}, Output: {Output}", 
-            inputFolder, outputFolder);
+        if (dryRun)
+        {
+            _logger.LogInformation("Starting DRY RUN batch migration. Input: {Input}, Output: {Output}", 
+                inputFolder, outputFolder);
+        }
+        else
+        {
+            _logger.LogInformation("Starting batch migration job. Input: {Input}, Output: {Output}", 
+                inputFolder, outputFolder);
+        }
 
         var searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
         var files = Directory.GetFiles(inputFolder, filePattern, searchOption);
 
         _logger.LogInformation("Found {Count} files to migrate", files.Length);
+
+        // Create output directory only if not dry run
+        if (!dryRun && !string.IsNullOrEmpty(outputFolder))
+        {
+            Directory.CreateDirectory(outputFolder);
+        }
 
         foreach (var file in files)
         {
@@ -79,9 +103,34 @@ public class MigrationJob
                 break;
             }
 
-            await ExecuteAsync(file, cancellationToken);
+            await ExecuteAsync(file, outputFolder, dryRun, cancellationToken);
         }
 
-        _logger.LogInformation("Batch migration job completed");
+        _logger.LogInformation("Batch migration job completed. DryRun: {DryRun}", dryRun);
+    }
+
+    /// <summary>
+    /// Sanitizes a filename for the file system
+    /// </summary>
+    private static string SanitizeFileName(string fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+            return "untitled";
+
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var sanitized = new string(fileName
+            .Where(c => !invalidChars.Contains(c))
+            .ToArray());
+
+        // Replace spaces and underscores with hyphens
+        sanitized = System.Text.RegularExpressions.Regex.Replace(sanitized, @"[\s_]+", "-");
+
+        // Convert to lowercase
+        sanitized = sanitized.ToLowerInvariant();
+
+        // Remove leading/trailing hyphens
+        sanitized = sanitized.Trim('-');
+
+        return string.IsNullOrEmpty(sanitized) ? "untitled" : sanitized;
     }
 }

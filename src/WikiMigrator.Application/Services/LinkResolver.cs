@@ -4,6 +4,11 @@ using WikiMigrator.Domain.Entities;
 namespace WikiMigrator.Application.Services;
 
 /// <summary>
+/// Represents a broken link found during resolution.
+/// </summary>
+public record BrokenLink(string SourceTitle, string LinkTarget, int Position);
+
+/// <summary>
 /// Service for resolving wiki-style links in content.
 /// Parses [[link]] and [[link|text]] formats and maps them to sanitized filenames.
 /// </summary>
@@ -14,6 +19,7 @@ public class LinkResolver : ILinkResolver
     
     private readonly Dictionary<string, string> _linkMap = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _knownTitles = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<BrokenLink> _brokenLinks = new();
 
     /// <summary>
     /// Registers a title with its sanitized filename for link resolution.
@@ -69,10 +75,13 @@ public class LinkResolver : ILinkResolver
 
     /// <summary>
     /// Resolves wiki links in content to markdown-style links using the registered link map.
+    /// Optionally tracks broken links.
     /// </summary>
     /// <param name="content">Content containing wiki links</param>
+    /// <param name="sourceTitle">The title of the source tiddler (for tracking broken links)</param>
+    /// <param name="trackBrokenLinks">Whether to track broken links</param>
     /// <returns>Content with wiki links converted to markdown links</returns>
-    public string ResolveLinks(string content)
+    public string ResolveLinks(string content, string? sourceTitle = null, bool trackBrokenLinks = false)
     {
         if (string.IsNullOrEmpty(content))
             return content;
@@ -88,9 +97,43 @@ public class LinkResolver : ILinkResolver
                 return $"[{linkText}]({sanitizedFilename}.md)";
             }
 
+            // Track broken link if requested
+            if (trackBrokenLinks && sourceTitle != null)
+            {
+                TrackBrokenLink(sourceTitle, linkTarget, match.Index);
+            }
+
             // If not found in the map, use sanitized version of the link target
             var fallbackSanitized = SanitizeFilename(linkTarget);
             return $"[{linkText}]({fallbackSanitized}.md)";
+        });
+    }
+
+    /// <summary>
+    /// Resolves wiki links in content to Obsidian wiki-link format [[sanitized|original]].
+    /// This preserves the original link text while using the sanitized filename as the link target.
+    /// </summary>
+    /// <param name="content">Content containing wiki links</param>
+    /// <returns>Content with wiki links converted to Obsidian format</returns>
+    public string ResolveLinksToObsidian(string content)
+    {
+        if (string.IsNullOrEmpty(content))
+            return content;
+
+        return WikiLinkRegex.Replace(content, match =>
+        {
+            var linkTarget = match.Groups[1].Value.Trim();
+            var linkText = match.Groups[2].Success ? match.Groups[2].Value.Trim() : linkTarget;
+
+            // Try to find the sanitized filename for this link
+            if (_linkMap.TryGetValue(linkTarget, out var sanitizedFilename))
+            {
+                return $"[[{sanitizedFilename}|{linkText}]]";
+            }
+
+            // If not found in the map, use sanitized version of the link target
+            var fallbackSanitized = SanitizeFilename(linkTarget);
+            return $"[[{fallbackSanitized}|{linkText}]]";
         });
     }
 
@@ -130,6 +173,45 @@ public class LinkResolver : ILinkResolver
     {
         _linkMap.Clear();
         _knownTitles.Clear();
+        _brokenLinks.Clear();
+    }
+
+    /// <summary>
+    /// Gets all broken links found during resolution.
+    /// </summary>
+    /// <returns>List of broken links</returns>
+    public IReadOnlyList<BrokenLink> GetBrokenLinks()
+    {
+        return _brokenLinks;
+    }
+
+    /// <summary>
+    /// Clears the broken links list.
+    /// </summary>
+    public void ClearBrokenLinks()
+    {
+        _brokenLinks.Clear();
+    }
+
+    /// <summary>
+    /// Gets all broken links for a specific source tiddler.
+    /// </summary>
+    /// <param name="sourceTitle">The source tiddler title</param>
+    /// <returns>List of broken links from that source</returns>
+    public IReadOnlyList<BrokenLink> GetBrokenLinksForSource(string sourceTitle)
+    {
+        return _brokenLinks.Where(b => b.SourceTitle.Equals(sourceTitle, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
+
+    /// <summary>
+    /// Tracks a broken link.
+    /// </summary>
+    /// <param name="sourceTitle">The source tiddler title</param>
+    /// <param name="linkTarget">The target that wasn't found</param>
+    /// <param name="position">The position in the content</param>
+    public void TrackBrokenLink(string sourceTitle, string linkTarget, int position)
+    {
+        _brokenLinks.Add(new BrokenLink(sourceTitle, linkTarget, position));
     }
 
     /// <summary>
@@ -172,10 +254,14 @@ public interface ILinkResolver
     void RegisterLink(string title, string sanitizedFilename);
     void RegisterTiddlers(IEnumerable<WikiTiddler> tiddlers);
     static IEnumerable<string> ExtractLinks(string content) => LinkResolver.ExtractLinks(content);
-    string ResolveLinks(string content);
+    string ResolveLinks(string content, string? sourceTitle = null, bool trackBrokenLinks = false);
+    string ResolveLinksToObsidian(string content);
     string? GetSanitizedFilename(string title);
     bool HasTitle(string title);
     IReadOnlyDictionary<string, string> GetLinkMap();
     void Clear();
     static string SanitizeFilename(string title) => LinkResolver.SanitizeFilename(title);
+    IReadOnlyList<BrokenLink> GetBrokenLinks();
+    void ClearBrokenLinks();
+    IReadOnlyList<BrokenLink> GetBrokenLinksForSource(string sourceTitle);
 }

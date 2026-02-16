@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using WikiMigrator.Application.Interfaces;
 using WikiMigrator.Domain.Entities;
+using System.IO;
 
 namespace WikiMigrator.Application.Commands;
 
@@ -20,7 +21,9 @@ public class ParseFileHandler : IRequestHandler<ParseFileCommand, IEnumerable<Wi
     {
         _logger.LogInformation("Parsing file: {FilePath}", request.FilePath);
         
-        var result = await _parser.ParseAsync(request.FilePath);
+        // Read file content - ParseAsync expects content, not file path
+        var content = await File.ReadAllTextAsync(request.FilePath, cancellationToken);
+        var result = await _parser.ParseAsync(content);
         
         _logger.LogInformation("Parsed {Count} tiddlers from {FilePath}", result.Count(), request.FilePath);
         

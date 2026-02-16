@@ -227,6 +227,81 @@ public class MarkdownWriterTests
         Assert.Contains("Line 1\\nLine 2", result);
     }
 
+    [Fact]
+    public void GenerateFrontmatter_WithOriginalTags_PreservesAllOriginalTags()
+    {
+        // Arrange - tiddler with multiple original tags including PARA and Task tags
+        var tiddler = new WikiTiddler
+        {
+            Title = "Project Task Note",
+            Created = DateTime.Now,
+            Modified = DateTime.Now,
+            Fields = new List<WikiField>
+            {
+                new WikiField { Name = "tags", Value = "Project, Task, work, important" }
+            }
+        };
+
+        // Act
+        var result = _markdownWriter.GenerateFrontmatter(tiddler);
+
+        // Assert - all original tags should be preserved in the frontmatter
+        Assert.Contains("tags:", result);
+        Assert.Contains("Project", result);
+        Assert.Contains("Task", result);
+        Assert.Contains("work", result);
+        Assert.Contains("important", result);
+    }
+
+    [Fact]
+    public void GenerateFrontmatter_WithProjectAndTaskTags_PreservesBothInFrontmatter()
+    {
+        // Arrange - note with both Project and Task tags
+        var tiddler = new WikiTiddler
+        {
+            Title = "Project with Tasks",
+            Created = DateTime.Now,
+            Modified = DateTime.Now,
+            Fields = new List<WikiField>
+            {
+                new WikiField { Name = "tags", Value = "Project, Task" }
+            }
+        };
+
+        // Act
+        var result = _markdownWriter.GenerateFrontmatter(tiddler);
+
+        // Assert - both Project and Task should be in the tags
+        Assert.Contains("tags:", result);
+        Assert.Contains("Project", result);
+        Assert.Contains("Task", result);
+    }
+
+    [Fact]
+    public void GenerateFrontmatter_WithHierarchicalTags_PreservesOriginalAndExpandsHierarchy()
+    {
+        // Arrange - tag with hierarchy like "parent/child"
+        var tiddler = new WikiTiddler
+        {
+            Title = "Hierarchical Tags",
+            Created = DateTime.Now,
+            Modified = DateTime.Now,
+            Fields = new List<WikiField>
+            {
+                new WikiField { Name = "tags", Value = "Project, work/subtask" }
+            }
+        };
+
+        // Act
+        var result = _markdownWriter.GenerateFrontmatter(tiddler);
+
+        // Assert - original tags should be preserved
+        Assert.Contains("tags:", result);
+        Assert.Contains("Project", result);
+        // The hierarchy expansion adds parent tags, but original should still be there
+        Assert.Contains("work/subtask", result);
+    }
+
     #endregion
 
     #region GenerateMarkdown Tests

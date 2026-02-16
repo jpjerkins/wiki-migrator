@@ -33,6 +33,7 @@ public partial class WikiTiddler
     public DateTime Modified { get; set; }
     public List<WikiField> Fields { get; set; } = new();
     public TiddlerMetadata Metadata { get; set; } = new();
+    public List<string> Backlinks { get; set; } = new();
 
     public static void SetLogger(ILogger logger) => _logger = logger;
 }

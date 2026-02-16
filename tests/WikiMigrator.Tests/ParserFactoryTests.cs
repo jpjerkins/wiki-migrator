@@ -27,7 +27,7 @@ public class ParserFactoryTests
     }
 
     [Fact]
-    public void GetParser_WithHtmlExtension_ReturnsHtmlWikiParser()
+    public void GetParser_WithHtmlExtension_ReturnsTiddlyWiki5JsonParser()
     {
         // Arrange
         var filePath = "test.html";
@@ -37,7 +37,8 @@ public class ParserFactoryTests
 
         // Assert
         Assert.NotNull(parser);
-        Assert.IsType<HtmlWikiParser>(parser);
+        // Default HTML parser is now TiddlyWiki5JsonParser
+        Assert.IsType<TiddlyWiki5JsonParser>(parser);
     }
 
     [Fact]
@@ -55,7 +56,8 @@ public class ParserFactoryTests
         Assert.NotNull(tidParser);
         Assert.IsType<TidFileParser>(tidParser);
         Assert.NotNull(htmlParser);
-        Assert.IsType<HtmlWikiParser>(htmlParser);
+        // Default HTML parser is now TiddlyWiki5JsonParser
+        Assert.IsType<TiddlyWiki5JsonParser>(htmlParser);
     }
 
     [Fact]
@@ -73,7 +75,8 @@ public class ParserFactoryTests
         Assert.NotNull(parser);
         Assert.IsType<TidFileParser>(parser);
         Assert.NotNull(htmlParser);
-        Assert.IsType<HtmlWikiParser>(htmlParser);
+        // Default HTML parser is now TiddlyWiki5JsonParser
+        Assert.IsType<TiddlyWiki5JsonParser>(htmlParser);
     }
 
     [Fact]
@@ -163,22 +166,100 @@ Test content";
     }
 
     [Fact]
-    public void GetParser_WithHtmlExtension_ParserCanParse()
+    public void GetParser_WithLegacyHtmlContent_UsesLegacyParser()
     {
-        // Arrange
-        var filePath = "test.html";
+        // This test verifies that old-style HTML format can still be parsed
+        // by using the legacy parser directly
+        // Arrange - old-style HTML format (no JSON)
         var input = @"<div class=""tiddler"" data-created=""20240101"">
   <div class=""title"">HTML Tiddler</div>
   <div class=""body"">HTML content</div>
 </div>";
 
-        // Act
-        var parser = _factory.GetParser(filePath);
-        var result = parser!.ParseAsync(input).Result;
+        // Act - use legacy parser directly
+        var parser = new HtmlWikiParser();
+        var result = parser.ParseAsync(input).Result;
         var tiddler = result.FirstOrDefault();
 
         // Assert
         Assert.NotNull(tiddler);
         Assert.Equal("HTML Tiddler", tiddler.Title);
+    }
+
+    [Fact]
+    public void TiddlyWiki5JsonParser_CanParseJsonFormat()
+    {
+        // This test verifies the new TiddlyWiki 5.x JSON format parser works
+        // Arrange - TiddlyWiki 5.x JSON format
+        var input = @"<!DOCTYPE html>
+<html>
+<head></head>
+<body>
+<script type=""application/json"" id=""tiddlers"">
+{
+    ""tiddlers"": {
+        ""JSON Tiddler"": {
+            ""title"": ""JSON Tiddler"",
+            ""text"": ""JSON content"",
+            ""tags"": [""tag1"", ""tag2""],
+            ""created"": ""20240101120000"",
+            ""modified"": ""20240115150000""
+        }
+    }
+}
+</script>
+</body>
+</html>";
+
+        // Act
+        var parser = new TiddlyWiki5JsonParser();
+        var result = parser.ParseAsync(input).Result;
+        var tiddler = result.FirstOrDefault();
+
+        // Assert
+        Assert.NotNull(tiddler);
+        Assert.Equal("JSON Tiddler", tiddler.Title);
+        Assert.Equal("JSON content", tiddler.Content);
+    }
+
+    // Additional tests for better branch coverage
+    
+    [Fact]
+    public void GetParser_WithMultipleDotsInFilename_UsesLastExtension()
+    {
+        // Arrange
+        var filePath = "file.name.tid";
+        
+        // Act
+        var parser = _factory.GetParser(filePath);
+        
+        // Assert
+        Assert.IsType<TidFileParser>(parser);
+    }
+
+    [Fact]
+    public void GetParser_WithHtmlExtensionCaseInsensitive()
+    {
+        // Arrange - various case combinations for .html
+        var paths = new[] { "test.html", "test.HTML", "test.HtMl", "test.html" };
+        
+        foreach (var path in paths)
+        {
+            var parser = _factory.GetParser(path);
+            Assert.IsType<TiddlyWiki5JsonParser>(parser);
+        }
+    }
+
+    [Fact]
+    public void GetParser_WithMixedCaseExtension_MatchesCorrectly()
+    {
+        // Arrange
+        var paths = new[] { "test.Tid", "test.TID", "test.Html", "test.HTML" };
+        
+        // Act & Assert
+        Assert.IsType<TidFileParser>(_factory.GetParser("test.Tid"));
+        Assert.IsType<TidFileParser>(_factory.GetParser("test.TID"));
+        Assert.IsType<TiddlyWiki5JsonParser>(_factory.GetParser("test.Html"));
+        Assert.IsType<TiddlyWiki5JsonParser>(_factory.GetParser("test.HTML"));
     }
 }

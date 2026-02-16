@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text;
 using Microsoft.Extensions.Logging;
 using WikiMigrator.Application.Interfaces;
 using WikiMigrator.Application.Services;
@@ -67,7 +66,10 @@ public class MarkdownWriter : IMarkdownWriter
         }
 
         // Characters that are invalid in filenames
-        var invalidChars = Path.GetInvalidFileNameChars();
+        // Path.GetInvalidFileNameChars() doesn't include < > : | ? * on Linux/.NET 10, so add them manually
+        var invalidChars = Path.GetInvalidFileNameChars().ToList();
+        invalidChars.AddRange(new[] { '<', '>', ':', '|', '?', '*' });
+        invalidChars = invalidChars.Distinct().ToList();
 
         var sanitized = new StringBuilder();
         foreach (var c in title)

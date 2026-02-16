@@ -10,9 +10,9 @@ public static class ScheduleMigrationJob
     /// <summary>
     /// Schedule a one-time migration job to run immediately
     /// </summary>
-    public static string Enqueue(IBackgroundJobClient client, string filePath)
+    public static string Enqueue(IBackgroundJobClient client, string filePath, string outputFolder, bool dryRun = false)
     {
-        return client.Enqueue<MigrationJob>(job => job.ExecuteAsync(filePath, CancellationToken.None));
+        return client.Enqueue<MigrationJob>(job => job.ExecuteAsync(filePath, outputFolder, dryRun, CancellationToken.None));
     }
 
     /// <summary>
@@ -23,10 +23,11 @@ public static class ScheduleMigrationJob
         string inputFolder,
         string outputFolder,
         string filePattern = "*.md",
-        bool recursive = true)
+        bool recursive = true,
+        bool dryRun = false)
     {
         return client.Enqueue<MigrationJob>(job => 
-            job.ExecuteBatchAsync(inputFolder, outputFolder, filePattern, recursive, CancellationToken.None));
+            job.ExecuteBatchAsync(inputFolder, outputFolder, filePattern, recursive, dryRun, CancellationToken.None));
     }
 
     /// <summary>
@@ -35,9 +36,11 @@ public static class ScheduleMigrationJob
     public static string Schedule(
         IBackgroundJobClient client,
         string filePath,
-        TimeSpan delay)
+        string outputFolder,
+        TimeSpan delay,
+        bool dryRun = false)
     {
-        return client.Schedule<MigrationJob>(job => job.ExecuteAsync(filePath, CancellationToken.None), delay);
+        return client.Schedule<MigrationJob>(job => job.ExecuteAsync(filePath, outputFolder, dryRun, CancellationToken.None), delay);
     }
 
     /// <summary>
@@ -50,11 +53,12 @@ public static class ScheduleMigrationJob
         string outputFolder,
         string cronExpression,
         string filePattern = "*.md",
-        bool recursive = true)
+        bool recursive = true,
+        bool dryRun = false)
     {
         manager.AddOrUpdate<MigrationJob>(
             jobId,
-            job => job.ExecuteBatchAsync(inputFolder, outputFolder, filePattern, recursive, CancellationToken.None),
+            job => job.ExecuteBatchAsync(inputFolder, outputFolder, filePattern, recursive, dryRun, CancellationToken.None),
             cronExpression);
 
         return jobId;

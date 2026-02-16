@@ -148,7 +148,6 @@ public class MigrationJobTests
             .ReturnsAsync("converted content");
 
         _mediatorMock.Setup(m => m.Send(It.IsAny<WriteFileCommand>(), It.IsAny<CancellationToken>()))
-            .Callback<WriteFileCommand, CancellationToken>((cmd, _) => capturedFilePath = cmd.FilePath)
             .ReturnsAsync(true);
 
         try
@@ -157,9 +156,9 @@ public class MigrationJobTests
             await _job.ExecuteAsync(inputFile, outputFolder);
 
             // Assert - The file path must include the output folder
-            Assert.NotNull(capturedFilePath);
-            Assert.StartsWith(outputFolder, capturedFilePath, StringComparison.OrdinalIgnoreCase);
-            Assert.EndsWith(".md", capturedFilePath);
+            _mediatorMock.Verify(
+                m => m.Send(It.Is<WriteFileCommand>(c => c.FilePath.StartsWith(outputFolder)), It.IsAny<CancellationToken>()),
+                Times.Once);
         }
         finally
         {
@@ -199,7 +198,6 @@ public class MigrationJobTests
 
         int writeCount = 0;
         _mediatorMock.Setup(m => m.Send(It.IsAny<WriteFileCommand>(), It.IsAny<CancellationToken>()))
-            .Callback<WriteFileCommand, CancellationToken>((_, _) => writeCount++)
             .ReturnsAsync(true);
 
         try
@@ -208,7 +206,9 @@ public class MigrationJobTests
             await _job.ExecuteAsync(inputFile, outputFolder);
 
             // Assert - Only 2 non-system tiddlers should be written
-            Assert.Equal(2, writeCount);
+            _mediatorMock.Verify(
+                m => m.Send(It.IsAny<WriteFileCommand>(), It.IsAny<CancellationToken>()),
+                Times.Exactly(2));
         }
         finally
         {

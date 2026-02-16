@@ -87,7 +87,7 @@ public class DryRunModeTests
         try
         {
             // Act
-            await _job.ExecuteAsync(testFile, dryRun: true);
+            await _job.ExecuteAsync(testFile, Path.GetTempPath(), dryRun: true);
 
             // Assert - WriteFileCommand should NOT be called
             _mediatorMock.Verify(
@@ -121,7 +121,7 @@ public class DryRunModeTests
         try
         {
             // Act
-            await _job.ExecuteAsync(testFile, dryRun: false);
+            await _job.ExecuteAsync(testFile, Path.GetTempPath(), dryRun: false);
 
             // Assert - WriteFileCommand SHOULD be called
             _mediatorMock.Verify(

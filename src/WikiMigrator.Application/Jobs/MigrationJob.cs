@@ -33,9 +33,11 @@ public class MigrationJob
             var tiddlers = await _mediator.Send(new ParseFileCommand(filePath), cancellationToken);
             
             // Filter out system tiddlers (titles starting with "$")
-            tiddlers = tiddlers.Where(t => !t.Title.StartsWith("$")).ToList();
+            var filteredCount = tiddlers.Where(t => !t.Title.StartsWith("$")).ToList();
+            var count = filteredCount.Count;
+            tiddlers = filteredCount;
             
-            _logger.LogInformation("Parsed {Count} tiddlers (excluding system tiddlers)", tiddlers.Count);
+            _logger.LogInformation("Parsed {Count} tiddlers (excluding system tiddlers)", count);
             
             foreach (var tiddler in tiddlers)
             {

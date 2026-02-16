@@ -1,3 +1,4 @@
+using System.Linq;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using WikiMigrator.Application.Commands;
@@ -30,6 +31,11 @@ public class MigrationJob
         {
             // Parse the file
             var tiddlers = await _mediator.Send(new ParseFileCommand(filePath), cancellationToken);
+            
+            // Filter out system tiddlers (titles starting with "$")
+            tiddlers = tiddlers.Where(t => !t.Title.StartsWith("$")).ToList();
+            
+            _logger.LogInformation("Parsed {Count} tiddlers (excluding system tiddlers)", tiddlers.Count);
             
             foreach (var tiddler in tiddlers)
             {

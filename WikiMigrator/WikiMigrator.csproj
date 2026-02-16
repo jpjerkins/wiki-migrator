@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\WikiMigrator.Application\WikiMigrator.Application.csproj" />
+    <ProjectReference Include="..\src\WikiMigrator.Infrastructure\WikiMigrator.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
